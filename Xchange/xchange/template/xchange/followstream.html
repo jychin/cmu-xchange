@@ -21,7 +21,7 @@
               <p class="lead bg-info"><img src="{% url 'photo' item.xchangeuser.user.id %}" width="40px"> Posted By <a href="{% url 'profile' item.xchangeuser.user.id %}">{{item.xchangeuser.user.username}}</a> on {{item.created}}</p>
             </div>
             <div>
-              <p class="post">{{item}}</p>
+              <p class="post">{{item.itemname}}   {{item.itemprice}}</p>
               <p><img src="{% url 'itemphoto' item.id %}" width="200px"></p>
             </div>
             <div>

@@ -131,6 +131,8 @@ def post(request):
             return result_page
         new_item = Item(text=form.cleaned_data['content'],\
                         xchangeuser=request.user.xchangeuser,\
+                        itemname=form.cleaned_data['itemname'],\
+                        itemprice=form.cleaned_data['itemprice'],\
                         itemphoto=form.cleaned_data['itemphoto'],\
                         content_type=form.cleaned_data['itemphoto'].content_type)
         new_item.save()

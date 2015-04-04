@@ -10,6 +10,8 @@ MAX_UPLOAD_SIZE= 250000000
 
 class PostForm(forms.Form):
     content = forms.CharField(max_length=160,required=True)
+    itemname = forms.CharField(max_length=160,required=True)
+    itemprice = forms.CharField(max_length=160,required=True)
     itemphoto = forms.FileField(label=_('itemphoto'), \
                                     required=False, \
                                     error_messages = {'invalid':_("Image files only")}, \

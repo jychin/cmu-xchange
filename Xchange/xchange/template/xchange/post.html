@@ -21,7 +21,13 @@
               <form enctype="multipart/form-data" action="{% url 'post' %}" method="post">
                 {% csrf_token %}
                 <div>
+                  <p>Item Name: </p>
+                  <textarea id="status" class="field span10" rows="1" maxlength="160" name="itemname"></textarea> <br>
+                  <p>Item Price: </p>
+                  <textarea id="status" class="field span10" rows="1" maxlength="20" name="itemprice"></textarea> <br>
+                  <p>Description: </p>
                   <textarea id="status" class="field span10" rows="10" maxlength="160" name="content"></textarea> <br>
+                                 
                   <input type="file" name="itemphoto"><br />
                   <span id="text_counter"></span> <br>
                   <input class="btn btn-large btn-primary offset8" type="submit" id="posting" name="post" value="Post" />

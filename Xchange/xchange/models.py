@@ -17,6 +17,8 @@ class XchangeUser(models.Model):
 	content_type = models.CharField(max_length=50) 
 
 class Item(models.Model):
+	itemname = models.CharField(max_length=50)
+	itemprice = models.CharField(max_length=20)
 	text = models.CharField(max_length=160)
 	xchangeuser = models.ForeignKey(XchangeUser)
 	itemphoto = models.FileField(upload_to = 'items')
