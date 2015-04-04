@@ -57,8 +57,8 @@ def register(request):
     new_user.is_active = False
     new_user.save()
     print(form.cleaned_data['email'])
-    new_blog_user = BlogUser(user=new_user) 
-    new_blog_user.save()
+    new_xchange_user = XchangeUser(user=new_user) 
+    new_xchange_user.save()
 
     token = default_token_generator.make_token(new_user)
     email_body = """
@@ -93,8 +93,8 @@ def confirm_registration(request, username, token):
 def stream(request):
     items = Item.objects.all().order_by('-created')
     return render(request, 'xchange/stream.html', {'items' : items, \
-                                                         'name' : request.user.username, \
-                                                         'hasLogin' : 'true'})
+                                                    'name' : request.user.username, \
+                                                    'hasLogin' : 'true'})
 
 def globalstream_json(request):
     items = Item.objects.all().order_by('-created')
@@ -105,13 +105,13 @@ def globalstream_json(request):
         for comment in comments:
             tempCommentList.append({
                 "created":str(comment.created), 
-                "username":comment.bloguser.user.username, 
-                "userid":comment.bloguser.user.id,
+                "username":comment.xchangeuser.user.username, 
+                "userid":comment.xchangeuser.user.id,
                 "text":comment.text})
         tempList.append({"itemid":item.id, 
             "created":str(item.created), 
-            "username":item.bloguser.user.username, 
-            "userid":item.bloguser.user.id,
+            "username":item.xchangeuser.user.username, 
+            "userid":item.xchangeuser.user.id,
             "text":item.text,
             "comments":tempCommentList})
     # response_text = serializers.serialize('json',tempList)
@@ -123,14 +123,16 @@ def globalstream_json(request):
 def post(request):
     result_page = render(request, 'xchange/post.html')
     if request.POST:
-        form = PostForm(request.POST);
+        form = PostForm(request.POST, request.FILES);
         if not form.is_valid():
             result_page = render(request, 'xchange/post.html',{'name' : request.user.username, \
                                                                  'hasLogin' : 'true',\
                                                                  'inputErrors' : form.errors})
             return result_page
         new_item = Item(text=form.cleaned_data['content'],\
-                        bloguser=request.user.bloguser)
+                        xchangeuser=request.user.xchangeuser,\
+                        itemphoto=form.cleaned_data['itemphoto'],\
+                        content_type=form.cleaned_data['itemphoto'].content_type)
         new_item.save()
         result_page = stream(request)
     else :
@@ -138,17 +140,24 @@ def post(request):
                                                                  'hasLogin' : 'true'})
     return result_page
 
+def get_itemphoto(request, id):
+    item = get_object_or_404(Item, id=id)
+    print(item.itemphoto)
+    if not item.itemphoto:
+        raise Http404
+    return HttpResponse(item.itemphoto, content_type=item.content_type)
+
 @login_required
 def profile(request, id):
     tempuser = get_object_or_404(User, id=id)
     hasfollow = "self"
     if not tempuser.username==request.user.username:
         hasfollow = "follow"
-        if request.user.bloguser.followlist.all().filter(user__exact=tempuser):
+        if request.user.xchangeuser.followlist.all().filter(user__exact=tempuser):
             hasfollow = "unfollow"
 
-    # items = Item.objects.filter(blog_user=tempuser).order_by('-created'); 
-    items = tempuser.bloguser.item_set.all().order_by('-created');
+    # items = Item.objects.filter(xchange_user=tempuser).order_by('-created'); 
+    items = tempuser.xchangeuser.item_set.all().order_by('-created');
     return render(request, 'xchange/profile.html', {'user':tempuser, \
                                                           'items' : items, \
                                                           'hasLogin' : 'true', \
@@ -163,8 +172,8 @@ def editprofile(request):
         form = EditProfileForm(initial={'username':request.user.username,\
                                         'first_name':request.user.first_name, \
                                         'last_name': request.user.last_name, \
-                                        'bio':request.user.bloguser.bio,\
-                                        'age':request.user.bloguser.age })
+                                        'bio':request.user.xchangeuser.bio,\
+                                        'age':request.user.xchangeuser.age })
         context['form'] = form
 
         context['hasLogin'] = 'true'
@@ -188,17 +197,17 @@ def editprofile(request):
     request.user.first_name = form.cleaned_data['first_name']
     request.user.save()
 
-    tempBlogUser = request.user.bloguser
-    tempBlogUser.age = form.cleaned_data['age']
-    tempBlogUser.content_type = form.cleaned_data['picture'].content_type
-    tempBlogUser.bio = form.cleaned_data['bio']
-    tempBlogUser.picture = form.cleaned_data['picture']
-    tempBlogUser.save()
+    tempXchangeUser = request.user.xchangeuser
+    tempXchangeUser.age = form.cleaned_data['age']
+    tempXchangeUser.content_type = form.cleaned_data['picture'].content_type
+    tempXchangeUser.bio = form.cleaned_data['bio']
+    tempXchangeUser.picture = form.cleaned_data['picture']
+    tempXchangeUser.save()
 
     return redirect(reverse('xchange.views.profile', args=(request.user.id,)))
 
 def get_photo(request, id):
-    tempUser = get_object_or_404(User, id=id).bloguser
+    tempUser = get_object_or_404(User, id=id).xchangeuser
     if not tempUser.picture:
         raise Http404
     print tempUser.picture
@@ -208,8 +217,8 @@ def get_photo(request, id):
 @transaction.atomic
 def follow(request, id):
     if request.POST:
-        targetUser = get_object_or_404(User, id=id).bloguser
-        currentUser = request.user.bloguser
+        targetUser = get_object_or_404(User, id=id).xchangeuser
+        currentUser = request.user.xchangeuser
         if not targetUser:
             raise Http404
         if currentUser.followlist.all().filter(user__exact=targetUser.user):
@@ -222,8 +231,8 @@ def follow(request, id):
 @transaction.atomic
 def unfollow(request, id):
     if request.POST:
-        targetUser = get_object_or_404(User, id=id).bloguser
-        currentUser = request.user.bloguser
+        targetUser = get_object_or_404(User, id=id).xchangeuser
+        currentUser = request.user.xchangeuser
         if not currentUser.followlist.all().filter(user__exact=targetUser.user):
             raise Http404
         currentUser.followlist.remove(targetUser)
@@ -232,8 +241,8 @@ def unfollow(request, id):
 
 @login_required
 def followstream(request):
-    currentFollowList = request.user.bloguser.followlist.all();
-    items = Item.objects.filter(bloguser__in=currentFollowList).order_by('-created')
+    currentFollowList = request.user.xchangeuser.followlist.all();
+    items = Item.objects.filter(xchangeuser__in=currentFollowList).order_by('-created')
     return render(request, 'xchange/followstream.html', {'user':request.user, \
                                                           'items' : items, \
                                                           'hasLogin' : 'true',})
@@ -243,11 +252,11 @@ def addcomment(request, id):
     #validate id 
     tempItem = get_object_or_404(Item, id=id)
     if request.POST:
-        tempbloguser = request.user.bloguser
+        tempxchangeuser = request.user.xchangeuser
         form = CommentForm(request.POST)
         if form.is_valid():
             new_comment = Comment(text=request.POST['content'],\
-                            bloguser=request.user.bloguser,\
+                            xchangeuser=request.user.xchangeuser,\
                             item=tempItem)
             new_comment.save()
 
@@ -256,8 +265,8 @@ def addcomment(request, id):
     for comment in comments:
         tempList.append({
             "created":str(comment.created), 
-            "username":comment.bloguser.user.username, 
-            "userid":comment.bloguser.user.id,
+            "username":comment.xchangeuser.user.username, 
+            "userid":comment.xchangeuser.user.id,
             "text":comment.text})
     # response_text = serializers.serialize('json',tempList)
     response_text = json.dumps(tempList) #dump list as JSON

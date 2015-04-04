@@ -17,14 +17,15 @@
     <div class="row offset4 span10" id="postlist">
         {{errors}}
         {% for item in items %}
-          <!-- the actual blog post: title/author/date/content -->
+          <!-- the actual xchange post: title/author/date/content -->
           <div class="post-item">
             <hr>
             <div >
-              <p class="lead bg-info"><img src="{% url 'photo' item.bloguser.user.id %}" width="40px"> Posted By <a href="{% url 'profile' item.bloguser.user.id %}">{{item.bloguser.user.username}}</a> on {{item.created}}</p>
+              <p class="lead bg-info"><img src="{% url 'photo' item.xchangeuser.user.id %}" width="40px"> Posted By <a href="{% url 'profile' item.xchangeuser.user.id %}">{{item.xchangeuser.user.username}}</a> on {{item.created}}</p>
             </div>
             <div>
-              <p class="post">{{item}}</p>
+              <p class="post">{{item}}</p> 
+              <p><img src="{% url 'itemphoto' item.id %}" width="200px"></p>
             </div>
 
               <div>
@@ -35,7 +36,7 @@
             <div id="comment-{{item.id}}">
               {% for comment in item.comment_set.all %}
               <div >
-                <p ><img src="{% url 'photo' comment.bloguser.user.id %}" width="40px"> Commented By <a href="{% url 'profile' comment.bloguser.user.id %}">{{comment.bloguser.user.username}}</a> on {{comment.created}}</p>
+                <p ><img src="{% url 'photo' comment.xchangeuser.user.id %}" width="40px"> Commented By <a href="{% url 'profile' comment.xchangeuser.user.id %}">{{comment.xchangeuser.user.username}}</a> on {{comment.created}}</p>
               </div>
               <div>
                 <p class="post">{{comment.text}}</p>

@@ -4,7 +4,7 @@
 <div class="jumbotron offset3 span12">
     <div class="page-header">
       <h3>Hello, {{name}}!</h3>
-    <h4>Feel free to post anything within 160 characters, plus a photo of your stuff. Your post will be public to all members of this community.</h4>
+    <h4>Feel free to post anything within 160 characters, plus a photo of your item. Your post will be public to all members of this community.</h4>
     </div>
 </div> 
 {% endblock %}
@@ -18,10 +18,11 @@
             {{inputErrors}}
             <br>
             {% endif %}
-              <form method="post">
+              <form enctype="multipart/form-data" action="{% url 'post' %}" method="post">
                 {% csrf_token %}
                 <div>
                   <textarea id="status" class="field span10" rows="10" maxlength="160" name="content"></textarea> <br>
+                  <input type="file" name="itemphoto"><br />
                   <span id="text_counter"></span> <br>
                   <input class="btn btn-large btn-primary offset8" type="submit" id="posting" name="post" value="Post" />
                 </div>

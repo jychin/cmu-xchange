@@ -10,6 +10,10 @@ MAX_UPLOAD_SIZE= 250000000
 
 class PostForm(forms.Form):
     content = forms.CharField(max_length=160,required=True)
+    itemphoto = forms.FileField(label=_('itemphoto'), \
+                                    required=False, \
+                                    error_messages = {'invalid':_("Image files only")}, \
+                                    widget=forms.FileInput)
     def clean(self):
         cleaned_data = super(PostForm, self).clean()
         return cleaned_data
@@ -19,6 +23,19 @@ class PostForm(forms.Form):
         if not tempContent:
             raise forms.ValidationError("Invalid post content.")
         return tempContent
+
+    def clean_itemphoto(self):
+        picture = self.cleaned_data['itemphoto']
+        if not picture:
+            raise forms.ValidationError('No File is uploaded')
+        if not hasattr(picture, 'content_type'):
+            raise forms.ValidationError('No File is uploaded...')
+        if not picture.content_type.startswith('image'):
+            raise forms.ValidationError('File type is not image')
+        if picture.size > settings.MAX_UPLOAD_SIZE:
+            raise forms.ValidationError('File too big (max size is {0} bytes)'.format(settings.MAX_UPLOAD_SIZE))
+        return picture
+
 
 class CommentForm(forms.Form):
     content = forms.CharField(max_length=160,required=True)
