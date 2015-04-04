@@ -1,0 +1,27 @@
+{% extends "xchange/base.html" %}
+
+{% block page-header %}
+<div class="jumbotron offset3 span12">
+    <div class="page-header">
+      <h3>Complete your profile now!</h3>
+      <h4>You can change your username, first name, last name, age and biography.</h4>
+      <h4>You can also upload pictures as your avatar!</h4>
+    </div>
+</div> 
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row-fluid">
+        <div class="offset4 span10">
+        	{{errors}}
+		    <form enctype="multipart/form-data" action="{% url 'editprofile' %}" method="post">
+		        {{form.as_p}}
+		        {% csrf_token %}
+		        <br>
+		        <button type="submit" class="btn btn-primary offset1 span2">Submit</button>
+		    </form>
+		</div>
+	</div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>CMU Xchange</title>
+    {% load staticfiles %}
+    <link rel="stylesheet" type="text/css" href="{% static 'xchange/css/bootstrap.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'xchange/css/bootstrap.css' %}" />
+    <link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}/favicon.ico"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'xchange/css/post.css' %}" />
+    <script src="{% static 'xchange/js/jquery.js' %}"></script>
+    <script src="{% static 'xchange/js/bootstrap.js' %}"></script>
+    <script src="{% static 'xchange/js/post.js' %}"></script>
+    <script src="{% static 'xchange/js/addcomment.js' %}"></script>
+</head>
+
+<body>
+    <br>
+    <div class="container-fluid" id="mycontainer">
+      {% if hasLogin %}
+      <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              <li class="{% block global-active%}nong-active{% endblock %}"><a href="/stream">Global Stream</a></li>
+              <li class="{% block follow-active%}nong-active{% endblock %}"><a href="/followstream">Followed Stream</a></li>
+              <li class="{% block profile-active%}nong-active{% endblock %}"><a href="/editprofile">Edit Profile</a></li>
+              <li class="{% block post-active%}nong-active{% endblock %}"><a href="/post">Add Post</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="{% url 'logout' %}">Log Out</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div><!--/.container-fluid -->
+      </nav>
+      {% endif %}
+
+      {% block page-header %}
+      {% endblock %}
+
+      <div class="content">
+          {% block content %}
+          {% endblock %}
+      </div>
+    </div>
+</body>
+</html>

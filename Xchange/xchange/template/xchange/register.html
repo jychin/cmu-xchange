@@ -1,0 +1,29 @@
+{% extends "xchange/base.html" %}
+
+{% block page-header %}
+<div class="jumbotron offset3 span12">
+    <div class="page-header">
+      <h3>Welcome to CMU Xchange!</h3>
+      <h4>Now register, be one of us and have fun!</h4>
+    </div>
+</div> 
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row-fluid">
+    <div class="offset3 span6">
+      <form role="form" class="offset1 span8" method="POST">
+        {% csrf_token %}
+        {{form}}
+        <br>
+        <br>
+        <button type="submit" class="btn btn-primary offset5 span3">Submit</button>
+        <br>
+        <br>
+        <a href="{% url 'login' %}" >Already have an account? Click to log in!</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

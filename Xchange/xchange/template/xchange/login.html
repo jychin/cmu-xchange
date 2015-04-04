@@ -1,0 +1,39 @@
+{% extends "xchange/base.html" %}
+
+{% block page-header %}
+<div class="jumbotron offset3 span12">
+    <div class="page-header">
+        <h3>Welcome to CMU Xchange!</h3>
+        <h4>CMU Xchange is a platform that allows CMU students to buy/sell used items.</h4>
+        <h4>It is our product of MDT final project. It will eventually be a featureful, interactive web application including user registration and authentication, email integration for CMU user verification, post and photo upload, comments and quasi-real-time updates.</h4>
+        <h4>Now log in and take a look!</h4>
+    </div>
+</div> 
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row-fluid">
+            <div class="offset4 span10">
+                <form method="post" class="centered" action="{% url 'django.contrib.auth.views.login' %}">
+                    <table>
+                    <tr>
+                        <td>{{ form.username.label_tag }}</td>
+                        <td>{{ form.username }}</td>
+                    </tr>
+                    <br>
+                    <tr>
+                        <td>{{ form.password.label_tag }}</td>
+                        <td>{{ form.password }}</td>
+                    </tr>
+                    </table>
+                    <br>
+                    <button type="submit" class="btn btn-primary btn-lg offset2 span2">Log in</button> <br> <br>
+                    <a href="{% url 'register' %}" class="offset1 span6">No account yet? Click to register!</a>
+                    {% csrf_token %}
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

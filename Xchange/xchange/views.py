@@ -1,127 +1,46 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
+from django.template import Template, RequestContext, loader
+from django.shortcuts import render, redirect, render_to_response, get_object_or_404
 from django.core.urlresolvers import reverse
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse, Http404
+
 # Decorator to use built-in authentication system
 from django.contrib.auth.decorators import login_required
+
 # Used to create and manually log in a user
 from django.contrib.auth.models import User
 from django.contrib.auth import login, authenticate
+
 # Django transaction system so we can use @transaction.atomic
 from django.db import transaction
+
 from xchange.models import *
-from xchange.forms import *
-from django.http import HttpResponse, Http404
+
+from django.utils import timezone
+import datetime
 from django.core import serializers
 import json
 
+from xchange.forms import *
+
 from django.views.decorators.csrf import csrf_exempt
 
-@login_required
-def home(request):
-    # Sets up list of just the logged-in user's (request.user's) items
-    items = Item.objects.all().order_by('-time')
-    
-    #comments = Comment.objects.all().order_by('time')
-    context = {'items': items}
-    return render(request, 'xchange/globalstream.html', context)
+# Used to generate a one-time-use token to verify a user's email address
+from django.contrib.auth.tokens import default_token_generator
 
-@login_required
-def followstream(request):
-    templist = request.user.profile.follower.all().order_by('-time')
-    items = Item.objects.filter(user__in=templist)
-    context = {'items' : items}
-    return render(request, 'xchange/followstream.html', context)
+# Used to send mail from within Django
+from django.core.mail import send_mail
 
-
-@login_required
-def profile(request, id):
-    tempuser = get_object_or_404(User, id=id)
-
-    tempprofile = tempuser.profile
-    items = Item.objects.filter(user=tempuser).order_by('-time')
-    state = "1"
-    if request.user.profile == tempprofile:
-        state = "3"
-    elif request.user.profile.follower.all().filter(profile_user__exact=tempuser):
-        state = "2"
-    return render(request, 'xchange/profile.html', {'user':tempuser, 'items' : items, 'profile':tempprofile, 'state':state})
-
-@login_required
-def follow(request, id):
-    tempuser = User.objects.filter(id=id)[0]
-    tempprofile = tempuser.profile
-    request.user.profile.follower.add(tempprofile)
-    return redirect(reverse('profile', args=(id,)))
-
-@login_required
-def unfollow(request, id):
-    tempuser = User.objects.filter(id=id)[0]
-    tempprofile = tempuser.profile
-    request.user.profile.follower.remove(tempprofile)
-    return redirect(reverse('profile', args=(id,)))
-
-@login_required
-def edit_profile(request):
-    context = {}
-    # Just display the registration form if this is a GET request.
-    if request.method == 'GET':
-        context['form'] = CreateForm()
-        return render(request, 'xchange/edit_profile.html', context)
-
-    # Creates a bound form from the request POST parameters and makes the 
-    # form available in the request context dictionary.
-    new_profile =  request.user.profile
-    print request.FILES
-    form = CreateForm(request.POST, request.FILES, instance=new_profile)
-    
-
-
-    if not form.is_valid():
-        context['form'] = form
-        return render(request, 'xchange/edit_profile.html', context)
-    else:
-        if form.cleaned_data['photo']:
-            new_profile.content_type = form.cleaned_data['photo'].content_type
-            print 'content type =', form.cleaned_data['photo'].content_type
-        form.save()
-        context['message'] = 'Item #{0} saved.'.format(new_profile.id)
-        #context['form'] = CreForm()
-        return redirect(reverse('profile', args=(request.user.id,)))
-
-
-@login_required
-@transaction.atomic
-def add_item(request):
-    errors = []
-    # Creates a new item if it is present as a parameter in the request
-    if not 'item' in request.POST or not request.POST['item']:
-    	errors.append('You must enter an item to add.')
-    else:
-        if len(request.POST['item']) > 160:
-            errors.append('You must enter less than 160 characters.')
-            items = Item.objects.all().order_by('-time')
-            context = {'items' : items, 'errors' : errors}
-            return render(request, 'xchange/globalstream.html', context)
-    	new_item = Item(text=request.POST['item'], user=request.user.profile)
-    	new_item.save()
-    items = Item.objects.all().order_by('-time')
-    context = {'items' : items, 'errors' : errors}
-    return redirect(reverse('home'))
-    #return render(request, 'xchange/globalstream.html', context)
-    #return redirect(reverse('home'))
-    
-
+# register view
 @transaction.atomic
 def register(request):
     context = {}
-
     # Just display the registration form if this is a GET request.
     if request.method == 'GET':
         context['form'] = RegistrationForm()
         return render(request, 'xchange/register.html', context)
 
-    # Creates a bound form from the request POST parameters and makes the 
-    # form available in the request context dictionary.
     form = RegistrationForm(request.POST)
     context['form'] = form
 
@@ -129,75 +48,222 @@ def register(request):
     if not form.is_valid():
         return render(request, 'xchange/register.html', context)
 
-    # Creates the new user from the valid form data
-    new_user = User.objects.create_user(username=form.cleaned_data['username'], \
-                                        first_name=form.cleaned_data['firstname'],\
-                                        last_name=form.cleaned_data['lastname'],\
-                                        password=form.cleaned_data['password1'])
+    # At this point, the form data is valid.  Register and login the user.
+    new_user = User.objects.create_user(username=form.cleaned_data['username'], 
+                                        password=form.cleaned_data['password1'],
+                                        first_name=form.cleaned_data['first_name'],
+                                        last_name=form.cleaned_data['last_name'],
+                                        email=form.cleaned_data['email'])
+    new_user.is_active = False
     new_user.save()
-    profile = Profile(profile_user=new_user, age=0, bio="")
-    profile.save()
-    new_user = authenticate(username=form.cleaned_data['username'],
-                            password=form.cleaned_data['password1'])
-    login(request, new_user)
-    return redirect(reverse('home'))
+    print(form.cleaned_data['email'])
+    new_blog_user = BlogUser(user=new_user) 
+    new_blog_user.save()
 
+    token = default_token_generator.make_token(new_user)
+    email_body = """
+Welcome to the CMU Xchange.  Please click the link below to
+verify your email address and complete the registration of your account:
+  http://%s%s
+""" % (request.get_host(), 
+       reverse('confirm', args=(new_user.username, token)))
 
-def photo(request, id):
-    item = get_object_or_404(Profile, id=id)
-    if not item.photo:
+    send_mail(subject="Verify your email address",
+              message= email_body,
+              from_email="yigew@andrew.cmu.edu",
+              recipient_list=[new_user.email])
+
+    context['email'] = form.cleaned_data['email']
+    return render(request, 'xchange/needs-confirmation.html', context)
+
+@transaction.atomic
+def confirm_registration(request, username, token):
+    user = get_object_or_404(User, username=username)
+
+    # Send 404 error if token is invalid
+    if not default_token_generator.check_token(user, token):
         raise Http404
 
-    return HttpResponse(item.photo, content_type=item.content_type)
+    # Otherwise token was valid, activate the user.
+    user.is_active = True
+    user.save()
+    return render(request, 'xchange/confirmed.html', {})
 
+@login_required
+def stream(request):
+    items = Item.objects.all().order_by('-created')
+    return render(request, 'xchange/stream.html', {'items' : items, \
+                                                         'name' : request.user.username, \
+                                                         'hasLogin' : 'true'})
 
-def get_post_json(request):
-    items = Item.objects.all().order_by('-time')
+def globalstream_json(request):
+    items = Item.objects.all().order_by('-created')
     tempList = []
     for item in items:
+        comments = item.comment_set.all().order_by('created')
+        tempCommentList = []
+        for comment in comments:
+            tempCommentList.append({
+                "created":str(comment.created), 
+                "username":comment.bloguser.user.username, 
+                "userid":comment.bloguser.user.id,
+                "text":comment.text})
         tempList.append({"itemid":item.id, 
-            "time":str(item.time), 
-            "username":item.user.profile_user.username, 
-            "userid":item.user.profile_user.id,
-            "text":item.text})
+            "created":str(item.created), 
+            "username":item.bloguser.user.username, 
+            "userid":item.bloguser.user.id,
+            "text":item.text,
+            "comments":tempCommentList})
+    # response_text = serializers.serialize('json',tempList)
     response_text = json.dumps(tempList) #dump list as JSON
     return HttpResponse(response_text, content_type='application/json')
 
+@login_required
+@transaction.atomic
+def post(request):
+    result_page = render(request, 'xchange/post.html')
+    if request.POST:
+        form = PostForm(request.POST);
+        if not form.is_valid():
+            result_page = render(request, 'xchange/post.html',{'name' : request.user.username, \
+                                                                 'hasLogin' : 'true',\
+                                                                 'inputErrors' : form.errors})
+            return result_page
+        new_item = Item(text=form.cleaned_data['content'],\
+                        bloguser=request.user.bloguser)
+        new_item.save()
+        result_page = stream(request)
+    else :
+        result_page = render(request, 'xchange/post.html',{'name' : request.user.username, \
+                                                                 'hasLogin' : 'true'})
+    return result_page
 
 @login_required
-@csrf_exempt
-def comment(request, id):
-    postid = id
-    # tempuser = request.user.profile_user
-    print request.POST['content']
-    new_comment = Comment(comment=request.POST['content'],\
-                        user=request.user.profile,\
-                        item=get_object_or_404(Item, id=id))
-    new_comment.save()
-    comments = new_comment.item.comment_set.all().order_by('time')
+def profile(request, id):
+    tempuser = get_object_or_404(User, id=id)
+    hasfollow = "self"
+    if not tempuser.username==request.user.username:
+        hasfollow = "follow"
+        if request.user.bloguser.followlist.all().filter(user__exact=tempuser):
+            hasfollow = "unfollow"
+
+    # items = Item.objects.filter(blog_user=tempuser).order_by('-created'); 
+    items = tempuser.bloguser.item_set.all().order_by('-created');
+    return render(request, 'xchange/profile.html', {'user':tempuser, \
+                                                          'items' : items, \
+                                                          'hasLogin' : 'true', \
+                                                          'hasfollow': hasfollow})
+
+@login_required
+@transaction.atomic
+def editprofile(request):
+    context = {}
+    # Just display the registration form if this is a GET request.
+    if request.method == 'GET':
+        form = EditProfileForm(initial={'username':request.user.username,\
+                                        'first_name':request.user.first_name, \
+                                        'last_name': request.user.last_name, \
+                                        'bio':request.user.bloguser.bio,\
+                                        'age':request.user.bloguser.age })
+        context['form'] = form
+
+        context['hasLogin'] = 'true'
+        return render(request, 'xchange/editprofile.html', context)
+
+    # Creates a bound form from the request POST parameters and makes the 
+    # form available in the request context dictionary.
+    print request.FILES
+    form = EditProfileForm(request.POST, request.FILES, user=request.user)
+    context['form'] = form
+
+    # Validates the form.
+    if not form.is_valid():
+        context['hasLogin'] = 'true'
+        context['errors'] = form.errors
+        return render(request, 'xchange/editprofile.html', context)
+    # At this point, the form data is valid.  Register and login the user.
+    
+    request.user.username = form.cleaned_data['username']
+    request.user.last_name = form.cleaned_data['last_name']
+    request.user.first_name = form.cleaned_data['first_name']
+    request.user.save()
+
+    tempBlogUser = request.user.bloguser
+    tempBlogUser.age = form.cleaned_data['age']
+    tempBlogUser.content_type = form.cleaned_data['picture'].content_type
+    tempBlogUser.bio = form.cleaned_data['bio']
+    tempBlogUser.picture = form.cleaned_data['picture']
+    tempBlogUser.save()
+
+    return redirect(reverse('xchange.views.profile', args=(request.user.id,)))
+
+def get_photo(request, id):
+    tempUser = get_object_or_404(User, id=id).bloguser
+    if not tempUser.picture:
+        raise Http404
+    print tempUser.picture
+    return HttpResponse(tempUser.picture, content_type=tempUser.content_type)
+
+@login_required
+@transaction.atomic
+def follow(request, id):
+    if request.POST:
+        targetUser = get_object_or_404(User, id=id).bloguser
+        currentUser = request.user.bloguser
+        if not targetUser:
+            raise Http404
+        if currentUser.followlist.all().filter(user__exact=targetUser.user):
+            raise Http404
+        currentUser.followlist.add(targetUser)
+        currentUser.save()
+    return redirect(reverse('xchange.views.profile', args=(id,)))
+
+@login_required
+@transaction.atomic
+def unfollow(request, id):
+    if request.POST:
+        targetUser = get_object_or_404(User, id=id).bloguser
+        currentUser = request.user.bloguser
+        if not currentUser.followlist.all().filter(user__exact=targetUser.user):
+            raise Http404
+        currentUser.followlist.remove(targetUser)
+        currentUser.save()
+    return redirect(reverse('xchange.views.profile', args=(id,)))
+
+@login_required
+def followstream(request):
+    currentFollowList = request.user.bloguser.followlist.all();
+    items = Item.objects.filter(bloguser__in=currentFollowList).order_by('-created')
+    return render(request, 'xchange/followstream.html', {'user':request.user, \
+                                                          'items' : items, \
+                                                          'hasLogin' : 'true',})
+@login_required
+@transaction.atomic
+def addcomment(request, id):
+    #validate id 
+    tempItem = get_object_or_404(Item, id=id)
+    if request.POST:
+        tempbloguser = request.user.bloguser
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            new_comment = Comment(text=request.POST['content'],\
+                            bloguser=request.user.bloguser,\
+                            item=tempItem)
+            new_comment.save()
+
+    comments = tempItem.comment_set.all().order_by('created')
     tempList = []
     for comment in comments:
         tempList.append({
-            "time":str(comment.time), 
-            "username":comment.user.profile_user.username, 
-            "userid":comment.user.profile_user.id,
-            "text":comment.comment})
+            "created":str(comment.created), 
+            "username":comment.bloguser.user.username, 
+            "userid":comment.bloguser.user.id,
+            "text":comment.text})
     # response_text = serializers.serialize('json',tempList)
     response_text = json.dumps(tempList) #dump list as JSON
-    #return render(request, 'xchange/home.html', context)
     return HttpResponse(response_text, content_type='application/json')
-
-@login_required
-def comment_form(request, id):
-    new_comment = Comment(comment=request.POST['content'],\
-                        user=request.user.profile,\
-                        item=get_object_or_404(Item, id=id))
-    new_comment.save()
-    return redirect(reverse('home'))
-
-
-
-
 
 
     
+
+

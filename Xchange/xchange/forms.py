@@ -2,19 +2,46 @@ from django import forms
 
 from django.contrib.auth.models import User
 from models import *
+from django.conf import settings
+from django.template.defaultfilters import filesizeformat
+from django.utils.translation import ugettext_lazy as _
+
 MAX_UPLOAD_SIZE= 250000000
+
+class PostForm(forms.Form):
+    content = forms.CharField(max_length=160,required=True)
+    def clean(self):
+        cleaned_data = super(PostForm, self).clean()
+        return cleaned_data
+
+    def clean_content(self):
+        tempContent = self.cleaned_data.get('content')
+        if not tempContent:
+            raise forms.ValidationError("Invalid post content.")
+        return tempContent
+
+class CommentForm(forms.Form):
+    content = forms.CharField(max_length=160,required=True)
+
+    def clean_content(self):
+        tempContent = self.cleaned_data.get('content')
+        if not tempContent:
+            raise forms.ValidationError("Invalid post content.")
+        return tempContent
+
 class RegistrationForm(forms.Form):
-    firstname = forms.CharField(max_length=20)
-    lastname  = forms.CharField(max_length=20)
-    username   = forms.CharField(max_length = 20)
+    first_name = forms.CharField(max_length=20,required=True)
+    last_name  = forms.CharField(max_length=20,required=True)
+    username   = forms.CharField(max_length = 20,required=True)
     password1  = forms.CharField(max_length = 200, 
                                  label='Password', 
-                                 widget = forms.PasswordInput())
+                                 widget = forms.PasswordInput(),
+                                 required=True)
     password2  = forms.CharField(max_length = 200, 
                                  label='Confirm password',  
-                                 widget = forms.PasswordInput())
-
-
+                                 widget = forms.PasswordInput(),
+                                 required=True)
+    email = forms.CharField(max_length = 75,required=True)
     # Customizes form validation for properties that apply to more
     # than one field.  Overrides the forms.Form.clean function.
     def clean(self):
@@ -39,27 +66,50 @@ class RegistrationForm(forms.Form):
         username = self.cleaned_data.get('username')
         if User.objects.filter(username__exact=username):
             raise forms.ValidationError("Username is already taken.")
+
+        # We must return the cleaned data we got from the cleaned_data
+        # dictionary
         return username
 
+class EditProfileForm(forms.Form):
+    first_name = forms.CharField(max_length=20,required=True)
+    last_name = forms.CharField(max_length=20,required=True)
+    username = forms.CharField(max_length=20,required=True)
+    age = forms.IntegerField()
+    picture = forms.FileField(label=_('Avatar'), \
+                                    required=False, \
+                                    error_messages = {'invalid':_("Image files only")}, \
+                                    widget=forms.FileInput)
+    bio = forms.CharField(widget=forms.Textarea)
 
-class CreateForm(forms.ModelForm):
-    class Meta:
-        model = Profile
-        exclude = ('profile_user', 'follower','content_type')
-    def clean_photo(self):
-        #print "lllllllllllll"
-        photo = self.cleaned_data['photo']
-        #print photo
-        if not photo:
-           return None
-        if not photo.content_type or not photo.content_type.startswith('image'):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super(EditProfileForm, self).__init__(*args, **kwargs) 
+    # Customizes form validation for the username field.
+    def clean_username(self):
+        # Confirms that the username is not already present in the
+        # User model database.
+        username = self.cleaned_data.get('username')
+        if username != self.user.username and User.objects.filter(username=username):
+            raise forms.ValidationError("Username is already taken.")
+        # We must return the cleaned data we got from the cleaned_data
+        # dictionary
+        return username
+    def clean_age(self):
+        age = self.cleaned_data.get('age')
+        if not age:
+            raise forms.ValidationError("Invalid age.")
+        if age < 0:
+            raise forms.ValidationError("Invalid age.")
+        return age
+    def clean_picture(self):
+        picture = self.cleaned_data['picture']
+        if not picture:
+            raise forms.ValidationError('No File is uploaded')
+        if not hasattr(picture, 'content_type'):
+            raise forms.ValidationError('No File is uploaded')
+        if not picture.content_type.startswith('image'):
             raise forms.ValidationError('File type is not image')
-        if photo.size > MAX_UPLOAD_SIZE:
-            raise forms.ValidationError('File too big (max size is {0} bytes)'.format(MAX_UPLOAD_SIZE))
-        return photo
-
-"""
-class EditForm(forms.ModelForm):
-    class Meta:
-        model = Profile
-"""
+        if picture.size > settings.MAX_UPLOAD_SIZE:
+            raise forms.ValidationError('File too big (max size is {0} bytes)'.format(settings.MAX_UPLOAD_SIZE))
+        return picture

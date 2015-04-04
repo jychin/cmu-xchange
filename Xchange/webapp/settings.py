@@ -10,14 +10,21 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import ConfigParser
+
+MAX_UPLOAD_SIZE= 250000000
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
+TEMPLATE_DIRS = (
+   os.path.join(os.path.dirname(__file__),'../xchange/template'),
+)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '8ggrv(j(*hq%v!ujumga(c8-8^4&-0o8)io&=!kax#*9jlog8f'
+SECRET_KEY = '=nyjs!%kbl+q%696fku5o=7lf1j39e_(x66$cry(fd=7h0#_y('
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -51,13 +58,8 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'webapp.urls'
 
-# Used by the authentication system for the private-todo-list application.
-# URL to use if the authentication system requires a user to log in.
 LOGIN_URL = '/login'
-
-# Default URL to redirect to after a user logs in.
 LOGIN_REDIRECT_URL = '/home'
-
 WSGI_APPLICATION = 'webapp.wsgi.application'
 
 
@@ -89,3 +91,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
+
+config = ConfigParser.ConfigParser()
+config.read("config.ini")
+
+EMAIL_HOST = config.get('Email', 'Host')
+EMAIL_PORT = config.get('Email', 'Port')
+EMAIL_HOST_USER = config.get('Email', 'User')
+EMAIL_HOST_PASSWORD = config.get('Email', 'Password')
+EMAIL_USE_SSL = True
+
+print 'EMAIL_HOST',EMAIL_HOST+':'+str(EMAIL_PORT)
+print 'EMAIL_HOST_USER',EMAIL_HOST_USER

@@ -1,0 +1,49 @@
+{% extends "xchange/base.html" %}
+
+{% block page-header %}
+{% load staticfiles %}
+<script src="{% static 'xchange/js/globalstream.js' %}"></script>
+<div class="jumbotron offset3 span12">
+    <div class="page-header">
+      <h3>Welcome to CMU Xchange, {{name}}!</h3>
+      <h4>CMU Xchange is a platform that allows CMU students to buy/sell used items.</h4>
+      <h4>It is our product of MDT final project. It will eventually be a featureful, interactive web application including user registration and authentication, email integration for CMU user verification, post and photo upload, comments and quasi-real-time updates.</h4>
+      <h4>Now take a look at all of the posts by our members!</h4>
+    </div>
+</div> 
+{% endblock %}
+
+{% block content %}
+    <div class="row offset4 span10" id="postlist">
+        {{errors}}
+        {% for item in items %}
+          <!-- the actual blog post: title/author/date/content -->
+          <div class="post-item">
+            <hr>
+            <div >
+              <p class="lead bg-info"><img src="{% url 'photo' item.bloguser.user.id %}" width="40px"> Posted By <a href="{% url 'profile' item.bloguser.user.id %}">{{item.bloguser.user.username}}</a> on {{item.created}}</p>
+            </div>
+            <div>
+              <p class="post">{{item}}</p>
+            </div>
+
+              <div>
+                <textarea class="field span10" rows="3" maxlength="50" id="comment-content-{{item.id}}"></textarea> <br> <br>
+                <input class="btn btn-large btn-primary offset7" onclick="addcomment({{item.id}})" value="Add Comment" />
+              </div>
+
+            <div id="comment-{{item.id}}">
+              {% for comment in item.comment_set.all %}
+              <div >
+                <p ><img src="{% url 'photo' comment.bloguser.user.id %}" width="40px"> Commented By <a href="{% url 'profile' comment.bloguser.user.id %}">{{comment.bloguser.user.username}}</a> on {{comment.created}}</p>
+              </div>
+              <div>
+                <p class="post">{{comment.text}}</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+    </div>
+    <hr>
+{% endblock %}
