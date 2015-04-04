@@ -16,31 +16,32 @@ Progress:
 
 2 Implemented user register/login feature
 
-3 Posts add/view
+3 Posts (including item name, price, description, photo) add/view
 
 4 Follow/unfollow other user
 
-5 User profile
+5 Read followed users' posts
 
-6 Comments
+6 User profile
+
+7 Comments
+
+8 Use CMU email account to register/login
+
+9 Real time updates
 
 
 
 Next Steps:
 
-1 User CMU andrew ID to control login/register
 
-2 Add tags to posts
+1 Delete posts
 
-3 Delete posts
+4 Create categories for posts (items) & Search
 
-4 Create categories for posts (items)
+6 Inbox one to one communication
 
-5 Search items
-
-6 Optimize "Comments" function to inbox communication
-
-7 Make the website pretty! (we can use bootstrap and css)
+7 Make the website more pretty! (we can use bootstrap and css)
 
 
 
