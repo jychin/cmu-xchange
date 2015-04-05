@@ -18,21 +18,21 @@
     <br>
     <div class="container-fluid" id="mycontainer">
       {% if hasLogin %}
-      <nav class="navbar navbar-default navbar-fixed-top">
-        <div class="container-fluid">
-          <div id="navbar" class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-              <li class="{% block global-active%}nong-active{% endblock %}"><a href="/stream">Global Stream</a></li>
-              <li class="{% block follow-active%}nong-active{% endblock %}"><a href="/followstream">Followed Stream</a></li>
-              <li class="{% block profile-active%}nong-active{% endblock %}"><a href="/editprofile">Edit Profile</a></li>
-              <li class="{% block post-active%}nong-active{% endblock %}"><a href="/post">Add Post</a></li>
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-              <li><a href="{% url 'logout' %}">Log out</a></li>
-            </ul>
-          </div><!--/.nav-collapse -->
-        </div><!--/.container-fluid -->
-      </nav>
+
+          <div class="navbar">
+            <div class="navbar-inner">
+              <a class="brand">CMU Xchange</a>
+              <ul class="nav">
+                <li class="{% block global-active%}nong-active{% endblock %}"><a href="/stream">Global Stream</a></li>
+                <li class="{% block follow-active%}nong-active{% endblock %}"><a href="/followstream">Followed Stream</a></li>
+                <li class="{% block profile-active%}nong-active{% endblock %}"><a href="/editprofile">Edit Profile</a></li>
+                <li class="{% block post-active%}nong-active{% endblock %}"><a href="/post">Add Post</a></li>
+              </ul>
+              <ul class="nav navbar-nav navbar-right">
+                <li><a href="{% url 'logout' %}">Log out</a></li>
+              </ul>
+            </div>
+          </div>
       {% endif %}
 
       {% block page-header %}

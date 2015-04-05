@@ -6136,13 +6136,17 @@ a.badge:focus {
 }
 
 .hero-unit {
+  background-image:url('../img/plaid.jpg');
+  height:300px;
+  /*opacity: .8;*/
   padding: 60px;
-  margin-bottom: 30px;
+  /*margin-bottom: 30px;*/
   font-size: 18px;
   font-weight: 200;
   line-height: 30px;
   color: inherit;
-  background-color: #eeeeee;
+  /*background-color: #eeeeee;*/
+  background-color: #000000;
   -webkit-border-radius: 6px;
      -moz-border-radius: 6px;
           border-radius: 6px;
@@ -6154,6 +6158,24 @@ a.badge:focus {
   line-height: 1;
   letter-spacing: -1px;
   color: inherit;
+}
+
+.hero-unit h3 {
+  margin-bottom: 0;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: #ffffff;
+  text-shadow: 2px 2px #1e1e1e;
+}
+
+.hero-unit h4 {
+  margin-bottom: 0;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: #ffffff;
+  text-shadow: 2px 2px #373737;
 }
 
 .hero-unit li {
