@@ -6138,7 +6138,7 @@ a.badge:focus {
 .hero-unit {
   background-image:url('../img/plaid.jpg');
   height:300px;
-  opacity: .8;
+  /*opacity: .8;*/
   padding: 60px;
   /*margin-bottom: 30px;*/
   font-size: 18px;
