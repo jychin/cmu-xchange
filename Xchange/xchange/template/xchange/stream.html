@@ -4,7 +4,7 @@
 {% load staticfiles %}
 <script src="{% static 'xchange/js/globalstream.js' %}"></script>
 <div class="row-fluid">
-  <div class="span9 offset2">
+  <div class="span8 offset2">
       <!-- <div class="page-header"> -->
       <div class="hero-unit">
         <h3>Welcome to CMU Xchange, {{name}}!</h3>
@@ -19,24 +19,24 @@
 {% block content %}
     <!-- <div class="row offset4 span10" id="postlist"> -->
     <div class="row-fluid">
-      <div class="span9 offset2" id="postlist">
+      <div class="span6 offset3" id="postlist">
         {{errors}}
         {% for item in items %}
           <!-- the actual xchange post: title/author/date/content -->
           <div class="post-item">
             <hr>
-            <div >
+            <div>
               <p class="lead bg-info"><img src="{% url 'photo' item.xchangeuser.user.id %}" width="40px"> Posted By <a href="{% url 'profile' item.xchangeuser.user.id %}">{{item.xchangeuser.user.username}}</a> on {{item.created}}</p>
             </div>
             <div>
-              <p class="post">{{item.itemname}}   {{item.itemprice}}</p>
+              <h5><p class="post">{{item.itemname}}   {{item.itemprice}}</p></h5>
               <p class="post">{{item}}</p> 
               <p><img src="{% url 'itemphoto' item.id %}" width="200px"></p>
             </div>
 
               <div>
-                <textarea class="field span10" rows="3" maxlength="50" id="comment-content-{{item.id}}"></textarea> <br> <br>
-                <input class="btn btn-large btn-primary offset7" onclick="addcomment({{item.id}})" value="Add Comment" />
+                <textarea class="field span12" rows="3" maxlength="50" id="comment-content-{{item.id}}"></textarea> <br> <br>
+                <input class="btn btn-info offset7" onclick="addcomment({{item.id}})" value="Add Comment" />
               </div>
 
             <div id="comment-{{item.id}}">

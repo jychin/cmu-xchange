@@ -6166,6 +6166,7 @@ a.badge:focus {
   line-height: 1;
   letter-spacing: -1px;
   color: #ffffff;
+  text-shadow: 2px 2px #373737;
 }
 
 .hero-unit h4 {
@@ -6174,6 +6175,7 @@ a.badge:focus {
   line-height: 1;
   letter-spacing: -1px;
   color: #ffffff;
+  text-shadow: 2px 2px #505050;
 }
 
 .hero-unit li {
