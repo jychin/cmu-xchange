@@ -7,10 +7,12 @@
   <div class="span8 offset2">
       <!-- <div class="page-header"> -->
       <div class="hero-unit">
+        <center>
         <h3>Welcome to CMU Xchange, {{name}}!</h3>
         <h4>CMU Xchange is a platform that allows CMU students to buy/sell used items.</h4>
         <h4>It is our product of MDT final project. It will eventually be a featureful, interactive web application including user registration and authentication, email integration for CMU user verification, post and photo upload, comments, and quasi-real-time updates.</h4>
         <h4>Now take a look at all of the posts by our members!</h4>
+        </center>
       </div>
   </div>
 </div> 
@@ -28,10 +30,10 @@
             <div>
               <p class="lead bg-info"><img src="{% url 'photo' item.xchangeuser.user.id %}" width="40px"> Posted By <a href="{% url 'profile' item.xchangeuser.user.id %}">{{item.xchangeuser.user.username}}</a> on {{item.created}}</p>
             </div>
-            <div>
+            <div><center>
               <h5><p class="post">{{item.itemname}}   {{item.itemprice}}</p></h5>
               <p class="post">{{item}}</p> 
-              <p><img src="{% url 'itemphoto' item.id %}" width="200px"></p>
+              <p><img src="{% url 'itemphoto' item.id %}" width="200px"></p></center>
             </div>
 
               <div>
